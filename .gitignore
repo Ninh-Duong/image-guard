@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Large model weights & data (downloaded locally or mounted)
+*.onnx
+*.onnx_data
+*.bin
+*.pt
+*.pth
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary, scratch files & test images
+*.tmp
+*.log
+test_crop.jpg

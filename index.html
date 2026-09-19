@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Guard - Offline Content Moderation Engine</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; }
+        .container { max-width: 920px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 8px; }
+        .badge { background: #0284c722; color: var(--accent); border: 1px solid var(--accent); padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        .card h2 { font-size: 1.1rem; margin-bottom: 16px; color: var(--text); }
+        
+        /* Dropzone */
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 28px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 16px;
+        }
+        .dropzone.dragover { border-color: var(--accent); background: #38bdf811; }
+        .dropzone svg { width: 44px; height: 44px; stroke: var(--muted); margin-bottom: 8px; }
+        .dropzone p { font-size: 0.9rem; color: var(--muted); }
+        .dropzone span { color: var(--accent); text-decoration: underline; }
+        #file-input { display: none; }
+        
+        /* Preview */
+        .preview-box { text-align: center; margin-top: 12px; display: none; }
+        .preview-box img { max-width: 100%; max-height: 240px; border-radius: 8px; border: 1px solid var(--border); }
+        
+        /* Rules Controls */
+        .rule-group { margin-bottom: 14px; }
+        .rule-header { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; }
+        .rule-header span.val { font-weight: 700; color: var(--accent); }
+        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+        
+        /* Result */
+        .status-box { padding: 16px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-weight: 700; font-size: 1.05rem; display: none; }
+        .status-box.allowed { background: #22c55e22; border: 1px solid var(--success); color: var(--success); }
+        .status-box.blocked { background: #ef444422; border: 1px solid var(--danger); color: var(--danger); }
+        .status-box.pending { background: #f59e0b22; border: 1px solid var(--warning); color: var(--warning); }
+        
+        .violations-box { background: #450a0a33; border: 1px solid var(--danger); border-radius: 8px; padding: 12px; margin-bottom: 16px; display: none; }
+        .violations-box h3 { font-size: 0.85rem; color: #fca5a5; margin-bottom: 6px; }
+        .violations-box ul { list-style: inside disc; font-size: 0.85rem; color: #fecaca; }
+        
+        /* Meter Bars */
+        .meter { margin-bottom: 12px; }
+        .meter-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
+        .meter-bar { height: 8px; background: #334155; border-radius: 999px; overflow: hidden; }
+        .meter-fill { height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 999px; }
+        .fill-safe { background: var(--success); }
+        .fill-nsfw { background: var(--danger); }
+        .fill-violence { background: #a855f7; }
+        
+        /* Technical details */
+        .tech-info { font-size: 0.75rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 12px; margin-top: 14px; }
+        .tech-info code { background: #0f172a; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #cbd5e1; }
+        .btn-small { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-top: 8px; }
+        .btn-small:hover { border-color: var(--danger); color: var(--danger); }
+
+        .btn-check { width: 100%; padding: 10px; background: var(--accent); color: #0f172a; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
+        .btn-check:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Real-time Loading Animation */
+        .spinner {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(56, 189, 248, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 0.75s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-box {
+            display: none;
+            background: #0284c718;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        .loading-step {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 8px;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ image-guard</h1>
+            <div class="badge">100% Offline • Self-Hosted Engine</div>
+        </header>
+
+        <div class="grid">
+            <!-- Left column: Upload & Rules -->
+            <div class="card">
+                <h2>1. Select / Drop Image</h2>
+                <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p>Drag & drop image here or <span>browse file</span></p>
+                    <input type="file" id="file-input" accept="image/*">
+                </div>
+
+                <div class="preview-box" id="preview-box">
+                    <img id="preview-img" src="" alt="Preview">
+                </div>
+
+                <h2 style="margin-top: 20px;">2. Rule Configuration</h2>
+                <div class="rule-group">
+                    <div class="rule-header">
+                        <span>Max NSFW Threshold (max_nsfw)</span>
+                        <span class="val" id="val-nsfw">0.70</span>
+                    </div>
+                    <input type="range" id="slider-nsfw" min="0" max="1" step="0.05" value="0.70" oninput="updateRules()">
+                </div>
+
+                <div class="rule-group">
+                    <div class="rule-header">
+                        <span>Max Violence Threshold (max_violence)</span>
+                        <span class="val" id="val-violence">0.60</span>
+                    </div>
+                    <input type="range" id="slider-violence" min="0" max="1" step="0.05" value="0.60" oninput="updateRules()">
+                </div>
+
+                <div class="rule-group">
+                    <div class="rule-header">
+                        <span>Min Safe Threshold (min_safe)</span>
+                        <span class="val" id="val-safe">0.30</span>
+                    </div>
+                    <input type="range" id="slider-safe" min="0" max="1" step="0.05" value="0.30" oninput="updateRules()">
+                </div>
+
+                <button class="btn-check" id="btn-recheck" disabled onclick="checkCurrentImage()">Re-evaluate Image</button>
+            </div>
+
+            <!-- Right column: Moderation Results -->
+            <div class="card">
+                <h2>3. Evaluation Results</h2>
+
+                <div id="loading-box" class="loading-box">
+                    <div><span class="spinner"></span>Evaluating Image Content...</div>
+                    <div class="loading-step" id="loading-step">Stage 1: dHash lookup (0ms) → Stage 2: ONNX CNN inference → Stage 3: Rule evaluation</div>
+                </div>
+
+                <div id="status-box" class="status-box"></div>
+
+                <div id="violations-box" class="violations-box">
+                    <h3>Violated Rules:</h3>
+                    <ul id="violations-list"></ul>
+                </div>
+
+                <div id="meters-box" style="display: none;">
+                    <div class="meter">
+                        <div class="meter-label"><span>Safe Content</span><span id="txt-safe">0%</span></div>
+                        <div class="meter-bar"><div class="meter-fill fill-safe" id="fill-safe"></div></div>
+                    </div>
+                    <div class="meter">
+                        <div class="meter-label"><span>NSFW / Explicit</span><span id="txt-nsfw">0%</span></div>
+                        <div class="meter-bar"><div class="meter-fill fill-nsfw" id="fill-nsfw"></div></div>
+                    </div>
+                    <div class="meter">
+                        <div class="meter-label"><span>Violence</span><span id="txt-violence">0%</span></div>
+                        <div class="meter-bar"><div class="meter-fill fill-violence" id="fill-violence"></div></div>
+                    </div>
+                </div>
+
+                <div class="tech-info" id="tech-info" style="display: none;">
+                    <div>Perceptual dHash: <code id="txt-hash">-</code></div>
+                    <button class="btn-small" id="btn-block" onclick="addCurrentHashToBlocklist()">+ Ban this dHash Permanently</button>
+                </div>
+
+                <div id="placeholder-result" style="text-align: center; color: var(--muted); padding: 40px 0;">
+                    No image uploaded yet. Select or drop an image to start moderation!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFile = null;
+        let lastResult = null;
+
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-input');
+
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function updateRules() {
+            document.getElementById('val-nsfw').textContent = Number(document.getElementById('slider-nsfw').value).toFixed(2);
+            document.getElementById('val-violence').textContent = Number(document.getElementById('slider-violence').value).toFixed(2);
+            document.getElementById('val-safe').textContent = Number(document.getElementById('slider-safe').value).toFixed(2);
+        }
+
+        function handleFile(file) {
+            currentFile = file;
+            document.getElementById('btn-recheck').disabled = false;
+            const previewImg = document.getElementById('preview-img');
+            previewImg.src = URL.createObjectURL(file);
+            document.getElementById('preview-box').style.display = 'block';
+            checkCurrentImage();
+        }
+
+        async function checkCurrentImage() {
+            if (!currentFile) return;
+
+            document.getElementById('placeholder-result').style.display = 'none';
+            document.getElementById('status-box').style.display = 'none';
+            document.getElementById('violations-box').style.display = 'none';
+            document.getElementById('meters-box').style.display = 'none';
+            document.getElementById('tech-info').style.display = 'none';
+            document.getElementById('loading-box').style.display = 'block';
+            document.getElementById('btn-recheck').disabled = true;
+
+            const nsfw = document.getElementById('slider-nsfw').value;
+            const violence = document.getElementById('slider-violence').value;
+            const safe = document.getElementById('slider-safe').value;
+            const url = `/check?max_nsfw=${nsfw}&max_violence=${violence}&min_safe=${safe}`;
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': currentFile.type || 'application/octet-stream' },
+                    body: currentFile
+                });
+                const data = await res.json();
+                lastResult = data;
+                renderResult(data);
+            } catch (err) {
+                alert('Error connecting to moderation server: ' + err);
+            } finally {
+                document.getElementById('loading-box').style.display = 'none';
+                document.getElementById('btn-recheck').disabled = false;
+            }
+        }
+
+        function renderResult(data) {
+            document.getElementById('placeholder-result').style.display = 'none';
+            const statusBox = document.getElementById('status-box');
+            statusBox.style.display = 'block';
+
+            if (data.flagged_pending_review) {
+                statusBox.className = 'status-box pending';
+                statusBox.textContent = '⚠️ PENDING REVIEW (FAIL-OPEN EXCEPTION)';
+            } else if (data.allowed) {
+                statusBox.className = 'status-box allowed';
+                statusBox.textContent = '✓ ALLOWED (PASSED MODERATION)';
+            } else {
+                statusBox.className = 'status-box blocked';
+                statusBox.textContent = '✕ BLOCKED (RULE VIOLATION)';
+            }
+
+            // Violations list
+            const vBox = document.getElementById('violations-box');
+            const vList = document.getElementById('violations-list');
+            if (data.violations && data.violations.length > 0) {
+                vList.innerHTML = data.violations.map(v => `<li>${v}</li>`).join('');
+                vBox.style.display = 'block';
+            } else {
+                vBox.style.display = 'none';
+            }
+
+            // Scores
+            if (data.scores) {
+                document.getElementById('meters-box').style.display = 'block';
+                const s = data.scores;
+                const safePct = Math.round((s.safe || 0) * 100);
+                const nsfwPct = Math.round((s.nsfw || 0) * 100);
+                const vioPct = Math.round((s.violence || 0) * 100);
+
+                document.getElementById('txt-safe').textContent = safePct + '%';
+                document.getElementById('fill-safe').style.width = safePct + '%';
+
+                document.getElementById('txt-nsfw').textContent = nsfwPct + '%';
+                document.getElementById('fill-nsfw').style.width = nsfwPct + '%';
+
+                document.getElementById('txt-violence').textContent = vioPct + '%';
+                document.getElementById('fill-violence').style.width = vioPct + '%';
+            }
+
+            // Technical info
+            if (data.hash) {
+                document.getElementById('tech-info').style.display = 'block';
+                document.getElementById('txt-hash').textContent = data.hash;
+            }
+        }
+
+        async function addCurrentHashToBlocklist() {
+            if (!lastResult || !lastResult.hash) return;
+            const res = await fetch('/blocklist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    hash: lastResult.hash,
+                    reason: 'MANUAL_BLOCK',
+                    scores: lastResult.scores || {}
+                })
+            });
+            const data = await res.json();
+            alert(`Hash ${lastResult.hash} saved to blocklist.jsonl! Total blocked: ${data.total_blocked}`);
+            checkCurrentImage();
+        }
+
+        // Fetch initial rule configuration
+        fetch('/rules')
+            .then(res => res.json())
+            .then(rules => {
+                if (rules.max_nsfw !== undefined) document.getElementById('slider-nsfw').value = rules.max_nsfw;
+                if (rules.max_violence !== undefined) document.getElementById('slider-violence').value = rules.max_violence;
+                if (rules.min_safe !== undefined) document.getElementById('slider-safe').value = rules.min_safe;
+                updateRules();
+            })
+            .catch(() => {});
+    </script>
+</body>
+</html>

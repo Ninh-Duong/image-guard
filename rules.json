@@ -1,0 +1,7 @@
+{
+  "max_nsfw": 0.70,
+  "max_violence": 0.60,
+  "min_safe": 0.30,
+  "max_hamming_distance": 4,
+  "auto_block_on_violation": true
+}
