@@ -200,6 +200,17 @@
                     </div>
                 </div>
 
+                <div id="scene-box" style="display: none; margin-top: 16px; padding: 14px; background: #0f172a; border: 1px solid var(--border); border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h3 style="font-size: 0.9rem; color: var(--accent); display: flex; align-items: center; gap: 6px;">
+                            <span>👁️</span> Phân tích Đối tượng & Bối cảnh (YOLO)
+                        </h3>
+                        <span id="badge-people" style="background: #38bdf822; color: var(--accent); border: 1px solid #38bdf844; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">0 người</span>
+                    </div>
+                    <p id="scene-summary" style="font-size: 0.85rem; color: var(--text); margin-bottom: 10px; line-height: 1.4;"></p>
+                    <div id="scene-tags" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                </div>
+
                 <div class="tech-info" id="tech-info" style="display: none;">
                     <div>Perceptual dHash: <code id="txt-hash">-</code></div>
                     <button class="btn-small" id="btn-block" onclick="addCurrentHashToBlocklist()">+ Ban this dHash Permanently</button>
@@ -257,6 +268,7 @@
             document.getElementById('status-box').style.display = 'none';
             document.getElementById('violations-box').style.display = 'none';
             document.getElementById('meters-box').style.display = 'none';
+            document.getElementById('scene-box').style.display = 'none';
             document.getElementById('tech-info').style.display = 'none';
             document.getElementById('loading-box').style.display = 'block';
             document.getElementById('btn-recheck').disabled = true;
@@ -331,6 +343,35 @@
             if (data.hash) {
                 document.getElementById('tech-info').style.display = 'block';
                 document.getElementById('txt-hash').textContent = data.hash;
+            }
+
+            // Scene & Object Analysis (YOLO)
+            const sceneBox = document.getElementById('scene-box');
+            if (data.scene) {
+                sceneBox.style.display = 'block';
+                document.getElementById('scene-summary').textContent = data.scene.summary || 'Không có mô tả chi tiết';
+                const pCount = data.scene.people_count || 0;
+                document.getElementById('badge-people').textContent = pCount > 0 ? `👥 ${pCount} người` : '👤 0 người';
+                
+                const tagsContainer = document.getElementById('scene-tags');
+                tagsContainer.innerHTML = '';
+                const counts = data.scene.counts || {};
+                const keys = Object.keys(counts);
+                if (keys.length > 0) {
+                    keys.forEach(k => {
+                        const tag = document.createElement('span');
+                        tag.style.cssText = 'background: #334155; color: #cbd5e1; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-family: monospace; border: 1px solid #475569;';
+                        tag.textContent = `${k}: ${counts[k]}`;
+                        tagsContainer.appendChild(tag);
+                    });
+                } else {
+                    const noTag = document.createElement('span');
+                    noTag.style.cssText = 'color: var(--muted); font-size: 0.75rem;';
+                    noTag.textContent = 'Không có vật thể riêng lẻ';
+                    tagsContainer.appendChild(noTag);
+                }
+            } else {
+                sceneBox.style.display = 'none';
             }
         }
 

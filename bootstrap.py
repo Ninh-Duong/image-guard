@@ -19,6 +19,8 @@ REQUIRED_PACKAGES = [
 
 MODEL_URL = "https://huggingface.co/crj/dl-ws/resolve/main/open_nsfw.onnx"
 DEFAULT_MODEL_PATH = Path(__file__).parent / "model.onnx"
+YOLO_MODEL_URL = "https://huggingface.co/Kalray/yolov8/resolve/main/yolov8n.onnx"
+DEFAULT_YOLO_PATH = Path(__file__).parent / "yolov8n.onnx"
 
 
 def check_and_install_dependencies():
@@ -106,14 +108,14 @@ def download_file_with_progress(url: str, destination: Path):
         sys.exit(1)
 
 
-def ensure_model_exists(model_path: Path = DEFAULT_MODEL_PATH):
-    """Ensures the ONNX model file exists; downloads it with progress animation if missing."""
-    if model_path.exists() and model_path.stat().st_size > 1024 * 1024:
-        size_mb = model_path.stat().st_size / (1024 * 1024)
-        print(f"[Bootstrap] Found local ONNX model weights ({size_mb:.1f} MB): {model_path.name}")
-        return
-
-    download_file_with_progress(MODEL_URL, model_path)
+def ensure_model_exists(model_path: Path = DEFAULT_MODEL_PATH, yolo_path: Path = DEFAULT_YOLO_PATH):
+    """Ensures ONNX model files exist; downloads them with progress animation if missing."""
+    for path, url, label in [(model_path, MODEL_URL, "OpenNSFW"), (yolo_path, YOLO_MODEL_URL, "YOLOv8n")]:
+        if path.exists() and path.stat().st_size > 1024 * 1024:
+            size_mb = path.stat().st_size / (1024 * 1024)
+            print(f"[Bootstrap] Found local {label} ONNX weights ({size_mb:.1f} MB): {path.name}")
+        else:
+            download_file_with_progress(url, path)
 
 
 def ensure_environment():

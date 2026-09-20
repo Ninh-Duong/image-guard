@@ -16,6 +16,15 @@ except Exception:
 
 
 def test():
+    # Backup blocklist to keep repository clean after tests
+    blocklist_path = "blocklist.jsonl"
+    orig_blocklist = None
+    try:
+        with open(blocklist_path, "r", encoding="utf-8") as f:
+            orig_blocklist = f.read()
+    except Exception:
+        pass
+
     # 1. Start server on test port 8899
     proc = subprocess.Popen(["python", "server.py", "8899"])
     time.sleep(1.5)
@@ -44,7 +53,7 @@ def test():
         img.save(buf, format="JPEG")
         img_bytes = buf.getvalue()
 
-        # 5. Test POST /check with standard rules (Safe image)
+        # 5. Test POST /check with standard rules (Safe image + YOLO Scene)
         req = urllib.request.Request(
             "http://localhost:8899/check?max_nsfw=0.7&max_violence=0.6&min_safe=0.0",
             data=img_bytes,
@@ -56,7 +65,10 @@ def test():
         data = json.loads(res.read().decode("utf-8"))
         assert data["allowed"] is True, f"Expected allowed=True, got: {data}"
         assert "hash" in data, "Response missing hash field"
-        print("[PASS] 3. POST /check evaluated safe image successfully. Scores:", data["scores"])
+        assert "scene" in data and data["scene"] is not None, "Response missing scene field"
+        assert "summary" in data["scene"], "Scene field missing summary"
+        assert "people_count" in data["scene"], "Scene field missing people_count"
+        print("[PASS] 3. POST /check evaluated safe image & scene successfully. Summary:", data["scene"]["summary"])
 
         # 6. Test POST /check with ultra-strict threshold (Forced Violation)
         req_strict = urllib.request.Request(
@@ -105,6 +117,12 @@ def test():
     finally:
         proc.terminate()
         proc.wait()
+        if orig_blocklist is not None:
+            try:
+                with open(blocklist_path, "w", encoding="utf-8") as f:
+                    f.write(orig_blocklist)
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":

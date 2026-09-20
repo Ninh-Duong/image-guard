@@ -16,6 +16,11 @@ except ImportError:
 
 from dhash import compute_dhash, is_hash_blocked
 
+try:
+    from detector import YoloDetector
+except ImportError:
+    YoloDetector = None
+
 
 class LocalModerationEngine:
     """
@@ -151,6 +156,14 @@ class LocalModerationEngine:
         else:
             print(f"[Info] Model file '{model_path}' not found. Running in mock/hash-only mode.")
 
+        # 4. Initialize YOLO object & scene detector
+        self.detector = None
+        if YoloDetector is not None:
+            try:
+                self.detector = YoloDetector()
+            except Exception as err:
+                print(f"[Warning] Failed to initialize YoloDetector: {err}")
+
     def compute_dhash(self, img: Image.Image, hash_size: int = 8) -> str:
         """Wrapper for compute_dhash utility."""
         return compute_dhash(img, hash_size=hash_size)
@@ -224,21 +237,31 @@ class LocalModerationEngine:
             if not passed and rules.get("auto_block_on_violation", True):
                 self.add_to_blocklist(img_hash, reason="; ".join(violations), scores=scores)
 
+            # 5. Logic 4: YOLO Object & Scene Context Analysis
+            scene = None
+            if self.detector is not None:
+                try:
+                    scene = self.detector.detect(img)
+                except Exception as err:
+                    print(f"[Warning] Scene detection failed: {err}")
+
             return {
                 "allowed": passed,
                 "hash": img_hash,
                 "scores": scores,
                 "violations": violations,
+                "scene": scene,
             }
 
         except Exception as err:
-            # 5. Logic 4: Fail-Open Circuit Breaker Policy
+            # 6. Logic 5: Fail-Open Circuit Breaker Policy
             # Prevents application crash if input image is unreadable or inference fails
             return {
                 "allowed": True,
                 "flagged_pending_review": True,
                 "error": str(err),
                 "violations": [],
+                "scene": None,
             }
 
     def check_batch(
@@ -324,9 +347,10 @@ if __name__ == "__main__":
     h = engine.compute_dhash(test_img)
     assert isinstance(h, str) and len(h) > 0, "dHash computation failed"
 
-    # 2. Test Check with default rules
+    # 2. Test Check with default rules & scene analysis
     res = engine.check(test_img, rules={"max_nsfw": 0.5, "max_violence": 0.5})
     assert res["allowed"] is True, "Safe test image check failed"
+    assert "scene" in res and res["scene"] is not None, "Scene analysis missing"
 
     # 3. Test Batch check
     batch_res = engine.check_batch([test_img, test_img])
