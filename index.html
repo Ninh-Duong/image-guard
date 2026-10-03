@@ -1,34 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Guard - Offline Content Moderation Engine</title>
+    <title>Image Guard & Memory Note Profiler - Test Playground & Live Docs</title>
     <style>
         :root {
-            --bg: #0f172a;
+            --bg: #0b1120;
+            --surface: #131d31;
             --card: #1e293b;
+            --card-sub: #172338;
             --border: #334155;
+            --border-focus: #38bdf8;
             --text: #f8fafc;
             --muted: #94a3b8;
             --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.15);
             --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.15);
             --success: #22c55e;
+            --success-bg: rgba(34, 197, 94, 0.15);
             --warning: #f59e0b;
+            --purple: #c084fc;
+            --purple-bg: rgba(192, 132, 252, 0.15);
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; }
-        .container { max-width: 920px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-        h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 8px; }
-        .badge { background: #0284c722; color: var(--accent); border: 1px solid var(--accent); padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; line-height: 1.5; }
+        .container { max-width: 1200px; margin: 0 auto; }
         
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
+        .brand span { font-size: 0.85rem; color: var(--muted); font-weight: 400; }
+        .badge { background: #0284c722; color: var(--accent); border: 1px solid var(--accent); padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Navigation Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .tab-btn { background: transparent; border: none; color: var(--muted); padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .tab-btn:hover { color: var(--text); background: var(--card-sub); }
+        .tab-btn.active { color: var(--accent); background: var(--accent-glow); border-bottom: 2px solid var(--accent); }
+
+        /* Grid Layout */
+        .grid { display: grid; grid-template-columns: 1fr 1.35fr; gap: 24px; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
         
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-        .card h2 { font-size: 1.1rem; margin-bottom: 16px; color: var(--text); }
-        
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+        .card h2 { font-size: 1.05rem; margin-bottom: 14px; color: var(--text); display: flex; align-items: center; gap: 8px; font-weight: 700; }
+
         /* Dropzone */
         .dropzone {
             border: 2px dashed var(--border);
@@ -36,58 +55,103 @@
             padding: 28px 16px;
             text-align: center;
             cursor: pointer;
-            transition: border-color 0.2s, background 0.2s;
+            transition: all 0.2s;
             margin-bottom: 16px;
+            background: var(--surface);
         }
-        .dropzone.dragover { border-color: var(--accent); background: #38bdf811; }
-        .dropzone svg { width: 44px; height: 44px; stroke: var(--muted); margin-bottom: 8px; }
-        .dropzone p { font-size: 0.9rem; color: var(--muted); }
-        .dropzone span { color: var(--accent); text-decoration: underline; }
+        .dropzone.dragover { border-color: var(--accent); background: var(--accent-glow); }
+        .dropzone svg { width: 42px; height: 42px; stroke: var(--muted); margin-bottom: 8px; }
+        .dropzone p { font-size: 0.88rem; color: var(--muted); }
+        .dropzone span { color: var(--accent); text-decoration: underline; font-weight: 600; }
         #file-input { display: none; }
-        
+
         /* Preview */
-        .preview-box { text-align: center; margin-top: 12px; display: none; }
-        .preview-box img { max-width: 100%; max-height: 240px; border-radius: 8px; border: 1px solid var(--border); }
-        
-        /* Rules Controls */
-        .rule-group { margin-bottom: 14px; }
-        .rule-header { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; }
-        .rule-header span.val { font-weight: 700; color: var(--accent); }
+        .preview-box { text-align: center; margin-top: 10px; display: none; background: #000; border-radius: 8px; padding: 8px; border: 1px solid var(--border); }
+        .preview-box img { max-width: 100%; max-height: 240px; border-radius: 6px; object-fit: contain; }
+
+        /* Rule Sliders */
+        .rule-group { margin-bottom: 12px; background: var(--surface); padding: 10px 14px; border-radius: 8px; border: 1px solid #1e293b; }
+        .rule-header { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px; }
+        .rule-header span.val { font-weight: 700; color: var(--accent); font-family: monospace; }
         input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
-        
-        /* Result */
-        .status-box { padding: 16px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-weight: 700; font-size: 1.05rem; display: none; }
-        .status-box.allowed { background: #22c55e22; border: 1px solid var(--success); color: var(--success); }
-        .status-box.blocked { background: #ef444422; border: 1px solid var(--danger); color: var(--danger); }
+
+        .btn-check { width: 100%; padding: 12px; background: var(--accent); color: #0b1120; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; transition: opacity 0.2s; font-size: 0.95rem; }
+        .btn-check:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Status Banner */
+        .status-box { padding: 14px; border-radius: 8px; margin-bottom: 16px; text-align: center; font-weight: 700; font-size: 0.95rem; display: none; }
+        .status-box.allowed { background: var(--success-bg); border: 1px solid var(--success); color: var(--success); }
+        .status-box.blocked { background: var(--danger-bg); border: 1px solid var(--danger); color: var(--danger); }
         .status-box.pending { background: #f59e0b22; border: 1px solid var(--warning); color: var(--warning); }
-        
-        .violations-box { background: #450a0a33; border: 1px solid var(--danger); border-radius: 8px; padding: 12px; margin-bottom: 16px; display: none; }
-        .violations-box h3 { font-size: 0.85rem; color: #fca5a5; margin-bottom: 6px; }
-        .violations-box ul { list-style: inside disc; font-size: 0.85rem; color: #fecaca; }
-        
-        /* Meter Bars */
-        .meter { margin-bottom: 12px; }
+
+        .violations-box { background: var(--danger-bg); border: 1px solid var(--danger); border-radius: 8px; padding: 12px; margin-bottom: 14px; display: none; }
+        .violations-box h3 { font-size: 0.82rem; color: #fca5a5; margin-bottom: 4px; text-transform: uppercase; font-weight: 700; }
+        .violations-box ul { list-style: inside disc; font-size: 0.82rem; color: #fecaca; }
+
+        /* Meters */
+        .meters-container { background: var(--surface); padding: 12px 14px; border-radius: 8px; margin-bottom: 14px; border: 1px solid #1e293b; }
+        .meter { margin-bottom: 8px; }
+        .meter:last-child { margin-bottom: 0; }
         .meter-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
-        .meter-bar { height: 8px; background: #334155; border-radius: 999px; overflow: hidden; }
+        .meter-bar { height: 7px; background: #334155; border-radius: 999px; overflow: hidden; }
         .meter-fill { height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 999px; }
         .fill-safe { background: var(--success); }
         .fill-nsfw { background: var(--danger); }
-        .fill-violence { background: #a855f7; }
+
+        /* Profile Card */
+        .profile-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-top: 14px; display: none; }
+        .profile-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 12px; }
+        .profile-title { font-size: 0.95rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+        .tag-pill { background: #38bdf822; color: var(--accent); border: 1px solid #38bdf844; padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
         
-        /* Technical details */
-        .tech-info { font-size: 0.75rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 12px; margin-top: 14px; }
-        .tech-info code { background: #0f172a; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #cbd5e1; }
-        .btn-small { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-top: 8px; }
-        .btn-small:hover { border-color: var(--danger); color: var(--danger); }
+        .interest-badge { background: var(--purple-bg); color: var(--purple); border: 1px solid #a855f744; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+        .caption-quote {
+            background: #0b1120;
+            border-left: 3px solid var(--accent);
+            padding: 10px 14px;
+            font-size: 0.88rem;
+            color: #f1f5f9;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            cursor: pointer;
+        }
+        .copy-btn:hover { color: var(--text); border-color: var(--accent); }
 
-        .btn-check { width: 100%; padding: 10px; background: var(--accent); color: #0f172a; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
-        .btn-check:disabled { opacity: 0.4; cursor: not-allowed; }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .lifestyle-tag { background: #1e293b; color: #38bdf8; border: 1px solid #334155; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
 
-        /* Real-time Loading Animation */
+        /* Pipeline Stepper (Live Document) */
+        .pipeline-stepper { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .step-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; }
+        .step-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; }
+        .step-status { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+        .step-status.pass { background: var(--success-bg); color: var(--success); }
+        .step-status.fail { background: var(--danger-bg); color: var(--danger); }
+        .step-status.skipped { background: #334155; color: var(--muted); }
+        .step-body { font-size: 0.8rem; color: var(--muted); line-height: 1.45; }
+        .step-body code { background: #0b1120; color: #e2e8f0; padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; }
+
+        /* JSON Code Viewer */
+        .code-box { background: #0b1120; border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-family: "Courier New", Courier, monospace; font-size: 0.78rem; color: #cbd5e1; max-height: 380px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; margin-top: 10px; position: relative; }
+
+        /* Loading */
         .spinner {
             display: inline-block;
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             border: 3px solid rgba(56, 189, 248, 0.2);
             border-radius: 50%;
             border-top-color: var(--accent);
@@ -95,9 +159,7 @@
             vertical-align: middle;
             margin-right: 8px;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .loading-box {
             display: none;
             background: #0284c718;
@@ -107,118 +169,448 @@
             padding: 16px;
             margin-bottom: 16px;
             text-align: center;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 600;
         }
-        .loading-step {
-            font-size: 0.8rem;
-            color: var(--muted);
-            margin-top: 8px;
-            font-weight: 400;
-        }
+
+        .tech-info { font-size: 0.75rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .tech-info code { background: #0b1120; padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #cbd5e1; }
+        .btn-small { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+        .btn-small:hover { border-color: var(--danger); color: var(--danger); }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🛡️ image-guard</h1>
-            <div class="badge">100% Offline • Self-Hosted Engine</div>
+            <div class="brand">
+                <h1>🛡️ image-guard</h1>
+                <span>| Memory Note Profiler Live Playground</span>
+            </div>
+            <div class="badge">100% Offline • Layered Architecture</div>
         </header>
 
-        <div class="grid">
-            <!-- Left column: Upload & Rules -->
-            <div class="card">
-                <h2>1. Select / Drop Image</h2>
-                <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p>Drag & drop image here or <span>browse file</span></p>
-                    <input type="file" id="file-input" accept="image/*">
-                </div>
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('playground')">🧪 Playground Test Ảnh</button>
+            <button class="tab-btn" onclick="switchTab('docs')">📖 Tài Liệu Tích Hợp API Mobile</button>
+            <button class="tab-btn" onclick="switchTab('architecture')">🏛️ Kiến Trúc 4 Tầng</button>
+            <button class="tab-btn" onclick="switchTab('logs')">🤖 AI Agent Process Logs</button>
+        </div>
 
-                <div class="preview-box" id="preview-box">
-                    <img id="preview-img" src="" alt="Preview">
-                </div>
-
-                <h2 style="margin-top: 20px;">2. Rule Configuration</h2>
-                <div class="rule-group">
-                    <div class="rule-header">
-                        <span>Max NSFW Threshold (max_nsfw)</span>
-                        <span class="val" id="val-nsfw">0.70</span>
+        <!-- TAB 1: PLAYGROUND & REALTIME DOCS -->
+        <div id="tab-playground">
+            <div class="grid">
+                <!-- Left: Upload & Config -->
+                <div class="card">
+                    <h2>📸 1. Thả Ảnh Kỷ Niệm Cần Test</h2>
+                    <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p>Kéo & thả ảnh vào đây hoặc <span>chọn file</span></p>
+                        <input type="file" id="file-input" accept="image/*">
                     </div>
-                    <input type="range" id="slider-nsfw" min="0" max="1" step="0.05" value="0.70" oninput="updateRules()">
-                </div>
 
-                <div class="rule-group">
-                    <div class="rule-header">
-                        <span>Max Violence Threshold (max_violence)</span>
-                        <span class="val" id="val-violence">0.60</span>
+                    <div class="preview-box" id="preview-box">
+                        <img id="preview-img" src="" alt="Preview">
                     </div>
-                    <input type="range" id="slider-violence" min="0" max="1" step="0.05" value="0.60" oninput="updateRules()">
-                </div>
 
-                <div class="rule-group">
-                    <div class="rule-header">
-                        <span>Min Safe Threshold (min_safe)</span>
-                        <span class="val" id="val-safe">0.30</span>
+                    <h2 style="margin-top: 18px;">⚙️ 2. Ngưỡng Moderation (Rules)</h2>
+                    <div class="rule-group">
+                        <div class="rule-header">
+                            <span>Ngưỡng NSFW tối đa (max_nsfw)</span>
+                            <span class="val" id="val-nsfw">0.70</span>
+                        </div>
+                        <input type="range" id="slider-nsfw" min="0" max="1" step="0.05" value="0.70" oninput="updateRules()">
                     </div>
-                    <input type="range" id="slider-safe" min="0" max="1" step="0.05" value="0.30" oninput="updateRules()">
-                </div>
 
-                <button class="btn-check" id="btn-recheck" disabled onclick="checkCurrentImage()">Re-evaluate Image</button>
-            </div>
-
-            <!-- Right column: Moderation Results -->
-            <div class="card">
-                <h2>3. Evaluation Results</h2>
-
-                <div id="loading-box" class="loading-box">
-                    <div><span class="spinner"></span>Evaluating Image Content...</div>
-                    <div class="loading-step" id="loading-step">Stage 1: dHash lookup (0ms) → Stage 2: ONNX CNN inference → Stage 3: Rule evaluation</div>
-                </div>
-
-                <div id="status-box" class="status-box"></div>
-
-                <div id="violations-box" class="violations-box">
-                    <h3>Violated Rules:</h3>
-                    <ul id="violations-list"></ul>
-                </div>
-
-                <div id="meters-box" style="display: none;">
-                    <div class="meter">
-                        <div class="meter-label"><span>Safe Content</span><span id="txt-safe">0%</span></div>
-                        <div class="meter-bar"><div class="meter-fill fill-safe" id="fill-safe"></div></div>
+                    <div class="rule-group">
+                        <div class="rule-header">
+                            <span>Ngưỡng Safe tối thiểu (min_safe)</span>
+                            <span class="val" id="val-safe">0.30</span>
+                        </div>
+                        <input type="range" id="slider-safe" min="0" max="1" step="0.05" value="0.30" oninput="updateRules()">
                     </div>
-                    <div class="meter">
-                        <div class="meter-label"><span>NSFW / Explicit</span><span id="txt-nsfw">0%</span></div>
-                        <div class="meter-bar"><div class="meter-fill fill-nsfw" id="fill-nsfw"></div></div>
+
+                    <h2 style="margin-top: 18px;">🌐 3. Ngôn Ngữ & Múi Giờ (i18n & Timezone)</h2>
+                    <div class="rule-group">
+                        <div class="rule-header">
+                            <span>Ngôn ngữ (Source Supported Languages)</span>
+                            <span class="val" id="val-lang-count" style="font-size: 0.72rem; color: var(--accent);">Nạp từ Source...</span>
+                        </div>
+                        <select id="select-lang" style="width: 100%; background: #0f172a; border: 1px solid var(--border); color: #f8fafc; padding: 8px; border-radius: 6px; font-size: 0.85rem;" onchange="if(currentFile) checkCurrentImage()">
+                            <option value="vi" selected>🇻🇳 Tiếng Việt (Vietnamese) [Default]</option>
+                            <option value="en">🇺🇸 English (International)</option>
+                            <option value="ja">🇯🇵 日本語 (Japanese)</option>
+                            <option value="ko">🇰🇷 한국어 (Korean)</option>
+                        </select>
+                        <div style="font-size: 0.72rem; color: var(--muted); margin-top: 4px;" id="desc-lang-source">
+                            ✨ Được hỗ trợ trực tiếp từ Source Engine (<code>GET /languages</code>)
+                        </div>
                     </div>
-                    <div class="meter">
-                        <div class="meter-label"><span>Violence</span><span id="txt-violence">0%</span></div>
-                        <div class="meter-bar"><div class="meter-fill fill-violence" id="fill-violence"></div></div>
+
+                    <div class="rule-group">
+                        <div class="rule-header">
+                            <span>Múi giờ người dùng (User Timezone)</span>
+                        </div>
+                        <select id="select-tz" style="width: 100%; background: #0f172a; border: 1px solid var(--border); color: #f8fafc; padding: 8px; border-radius: 6px; font-size: 0.85rem;" onchange="if(currentFile) checkCurrentImage()">
+                            <option value="Asia/Ho_Chi_Minh" selected>Asia/Ho_Chi_Minh (UTC+7, Vietnam)</option>
+                            <option value="America/New_York">America/New_York (UTC-4 / -5, USA)</option>
+                            <option value="Asia/Tokyo">Asia/Tokyo (UTC+9, Japan)</option>
+                            <option value="Europe/London">Europe/London (UTC+1 / 0, UK)</option>
+                            <option value="UTC">UTC (Coordinated Universal Time)</option>
+                        </select>
                     </div>
+
+                    <button class="btn-check" id="btn-recheck" disabled onclick="checkCurrentImage()">Phân Tích & Kiểm Duyệt Ngay</button>
                 </div>
 
-                <div id="scene-box" style="display: none; margin-top: 16px; padding: 14px; background: #0f172a; border: 1px solid var(--border); border-radius: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <h3 style="font-size: 0.9rem; color: var(--accent); display: flex; align-items: center; gap: 6px;">
-                            <span>👁️</span> Phân tích Đối tượng & Bối cảnh (YOLO)
+                <!-- Right: Real-time Evaluation & Profile -->
+                <div class="card">
+                    <h2>📊 3. Kết Quả Guardrail & Profile Người Dùng</h2>
+
+                    <div id="loading-box" class="loading-box">
+                        <div><span class="spinner"></span>Đang phân tích qua 4 tầng xử lý...</div>
+                        <div style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">dHash (0ms) → ONNX NSFW → YOLOv8 Object Detection → Profiler</div>
+                    </div>
+
+                    <div id="status-box" class="status-box"></div>
+
+                    <div id="violations-box" class="violations-box">
+                        <h3>Quy Tắc Bị Vi Phạm:</h3>
+                        <ul id="violations-list"></ul>
+                    </div>
+
+                    <!-- Guardrail Meters -->
+                    <div class="meters-container" id="meters-box" style="display: none;">
+                        <div class="meter">
+                            <div class="meter-label"><span>Độ an toàn (Safe Score)</span><span id="txt-safe">0%</span></div>
+                            <div class="meter-bar"><div class="meter-fill fill-safe" id="fill-safe"></div></div>
+                        </div>
+                        <div class="meter">
+                            <div class="meter-label"><span>Nhạy cảm (NSFW Score)</span><span id="txt-nsfw">0%</span></div>
+                            <div class="meter-bar"><div class="meter-fill fill-nsfw" id="fill-nsfw"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Card -->
+                    <div id="profile-box" class="profile-card">
+                        <div class="profile-header">
+                            <div class="profile-title">🎯 Profile Sở Thích Người Dùng (User Profile)</div>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                <span class="tag-pill" id="badge-tz" style="background: #a855f722; color: var(--purple); border-color: #a855f744;">UTC</span>
+                                <span class="tag-pill" id="badge-social">Solo</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="interest-badge" id="badge-interest">🍜 Ẩm thực & Thưởng thức</div>
+                            <span style="font-size: 0.75rem; color: var(--muted); margin-left: 6px;" id="txt-conf">Độ tin cậy: 85%</span>
+                        </div>
+
+                        <p style="font-size: 0.8rem; color: var(--muted); margin-top: 6px;" id="txt-scene-desc">Bối cảnh: Đang tải...</p>
+
+                        <div style="margin-top: 10px;">
+                            <span style="font-size: 0.75rem; color: var(--muted);">Gợi ý Caption cho Note Kỷ Niệm:</span>
+                            <div class="caption-quote">
+                                <span id="txt-caption">"Một bữa ăn thật ngon để nạp năng lượng!"</span>
+                                <button class="copy-btn" onclick="copyCaption()">Copy</button>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 8px;">
+                            <span style="font-size: 0.75rem; color: var(--muted);">Lifestyle Tags Tự Động:</span>
+                            <div class="tag-list" id="lifestyle-tags-container"></div>
+                        </div>
+
+                        <div style="margin-top: 10px;">
+                            <span style="font-size: 0.75rem; color: var(--accent); font-weight: 700;">🏷️ Merged Tags (Dữ liệu gộp tất cả Tags để lưu DB & Phân Tích):</span>
+                            <div class="tag-list" id="merged-tags-container" style="margin-top: 4px;"></div>
+                        </div>
+
+                        <div style="margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-size: 0.75rem; color: var(--muted); font-weight: 700;">💾 Dữ Liệu Lưu DB (Database Ready JSON):</span>
+                                <button class="btn-small" onclick="copyDBRecord()" style="padding: 2px 8px; font-size: 0.7rem; border-color: var(--accent); color: var(--accent);">📋 Copy DB JSON</button>
+                            </div>
+                            <div class="code-box" id="db-record-viewer" style="max-height: 160px; font-size: 0.72rem; margin-top: 4px; padding: 8px;">-</div>
+                        </div>
+                    </div>
+
+                    <div class="tech-info" id="tech-info" style="display: none;">
+                        <div>dHash: <code id="txt-hash">-</code> <span id="txt-time" style="margin-left: 6px; color: var(--muted);">(0ms)</span></div>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn-small" onclick="switchTab('logs')" style="border-color: var(--accent); color: var(--accent);">🤖 Xem AI Log</button>
+                            <button class="btn-small" onclick="addCurrentHashToBlocklist()">+ Cấm dHash này</button>
+                        </div>
+                    </div>
+
+                    <div id="placeholder-result" style="text-align: center; color: var(--muted); padding: 40px 0; font-size: 0.9rem;">
+                        Chưa có ảnh nào được phân tích. Hãy kéo thả ảnh kỷ niệm vào bên trái để bắt đầu!
+                    </div>
+
+                    <!-- Visual Step-by-Step Execution Trace (Live Docs) -->
+                    <div class="pipeline-stepper" id="pipeline-stepper" style="display: none;">
+                        <h3 style="font-size: 0.88rem; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                            <span>⚡</span> Tài Liệu Thực Thi Đa Tầng Thời Gian Thực
                         </h3>
-                        <span id="badge-people" style="background: #38bdf822; color: var(--accent); border: 1px solid #38bdf844; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">0 người</span>
+
+                        <div class="step-item" id="step-dhash">
+                            <div class="step-header">
+                                <span>Tầng 1: Bộ Lọc Gradient dHash (0ms)</span>
+                                <span class="step-status pass" id="status-dhash">PASSED</span>
+                            </div>
+                            <div class="step-body" id="desc-dhash">
+                                Tính 64-bit gradient hash từ ảnh xám 9x8 pixel. So khớp Hamming distance với <code>blocklist.jsonl</code>. Không tìm thấy trùng lặp vi phạm.
+                            </div>
+                        </div>
+
+                        <div class="step-item" id="step-nsfw">
+                            <div class="step-header">
+                                <span>Tầng 2: Mạng Nơ-ron ONNX NSFW CNN (~15-30ms)</span>
+                                <span class="step-status pass" id="status-nsfw">PASSED</span>
+                            </div>
+                            <div class="step-body" id="desc-nsfw">
+                                Chuẩn hóa EXIF transpose, resize 224x224 RGB, trừ mean ImageNet và phân tích tensor. Điểm NSFW nằm trong ngưỡng an toàn.
+                            </div>
+                        </div>
+
+                        <div class="step-item" id="step-yolo">
+                            <div class="step-header">
+                                <span>Tầng 3: Nhận Diện Thực Thể & Số Lượng Người (YOLOv8)</span>
+                                <span class="step-status pass" id="status-yolo">DETECTED</span>
+                            </div>
+                            <div class="step-body" id="desc-yolo">
+                                Chạy inference YOLOv8n trên ảnh 640x640 và NMS thuần NumPy. Trích xuất danh sách thực thể & số người xuất hiện.
+                            </div>
+                        </div>
+
+                        <div class="step-item" id="step-profiler">
+                            <div class="step-header">
+                                <span>Tầng 4: Trích Xuất Profile Sở Thích & Lifestyle Tags</span>
+                                <span class="step-status pass" id="status-profiler">MAPPED</span>
+                            </div>
+                            <div class="step-body" id="desc-profiler">
+                                Ánh xạ tập thực thể sang Taxonomy (Ẩm thực, Làm việc, Du lịch, Thú cưng, Thể thao, Bạn bè) để xây dựng hồ sơ người dùng.
+                            </div>
+                        </div>
                     </div>
-                    <p id="scene-summary" style="font-size: 0.85rem; color: var(--text); margin-bottom: 10px; line-height: 1.4;"></p>
-                    <div id="scene-tags" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: API DOCUMENTATION FOR MOBILE DEVELOPERS -->
+        <div id="tab-docs" style="display: none;">
+            <div class="card">
+                <h2>📱 Tài Liệu Tích Hợp API Cho Mobile App (Flutter / React Native / iOS / Android)</h2>
+                <p style="font-size: 0.88rem; color: var(--muted); margin-bottom: 16px;">
+                    Mobile app chỉ cần gọi duy nhất 1 endpoint <code>POST /check</code> với body là raw binary bytes của ảnh để vừa kiểm tra điều kiện đăng ảnh vừa nhận ngay profile người dùng và caption kỷ niệm gợi ý.
+                </p>
+
+                <h3 style="font-size: 0.9rem; color: var(--accent); margin-top: 14px;">1. Endpoint: <code>POST /check</code></h3>
+                <div class="code-box">curl -X POST "http://localhost:8000/check?lang=vi&timezone=Asia/Ho_Chi_Minh&max_nsfw=0.70&min_safe=0.30" \
+     -H "Content-Type: image/jpeg" \
+     -H "Accept-Language: vi-VN" \
+     -H "X-Timezone: Asia/Ho_Chi_Minh" \
+     --data-binary "@memory_photo.jpg"</div>
+
+                <h3 style="font-size: 0.9rem; color: var(--accent); margin-top: 20px;">2. Cấu Trúc JSON Phản Hồi (Response Schema)</h3>
+                <div class="code-box">{
+  "allowed": true,
+  "execution_time_ms": 68.5,
+  "guard": {
+    "allowed": true,
+    "hash": "0xc8dcd993d9b8c6f6",
+    "scores": {
+      "safe": 0.9965,
+      "nsfw": 0.0035
+    },
+    "violations": []
+  },
+  "profile": {
+    "primary_interest": "food_and_dining",
+    "interest_label": "Ẩm thực & Thưởng thức món ngon",
+    "confidence": 0.85,
+    "lifestyle_tags": [
+      "#Foodie",
+      "#AnUong",
+      "#NgonMoiNgay",
+      "#CafeChill"
+    ],
+    "social_context": {
+      "type": "duo",
+      "people_count": 2,
+      "description": "Cặp đôi / Đôi bạn thân"
+    },
+    "scene_summary": "2 người cùng 1 pizza, 2 cup",
+    "suggested_note_caption": "Một bữa ăn thật ngon để nạp đầy năng lượng và tận hưởng trọn vẹn hương vị cuộc sống! 🍜🍰",
+    "merged_tags": [
+      "#AmThuc",
+      "#Foodie",
+      "#Pizza",
+      "#DoiBanThan",
+      "#BuoiChieu"
+    ]
+  },
+  "db_record": {
+    "memory_id": "mem_20261003_084024_549864",
+    "user_language": "vi",
+    "user_timezone": "Asia/Ho_Chi_Minh",
+    "local_created_at": "2026-10-03T15:40:24+07:00",
+    "time_of_day": "afternoon"
+  }
+}</div>
+
+                <h3 style="font-size: 0.9rem; color: var(--accent); margin-top: 20px;">3. Code Mẫu Tích Hợp Flutter (Dart)</h3>
+                <div class="code-box">// Flutter / Dart snippet
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+Future<Map<String, dynamic>> checkAndProfileImage(File imageFile) async {
+  final deviceLang = Platform.localeName.startsWith('vi') ? 'vi' : 'en';
+  final timezone = 'Asia/Ho_Chi_Minh'; // Hoặc lấy từ flutter_timezone plugin
+  final uri = Uri.parse('http://YOUR_SERVER_IP:8000/check?lang=$deviceLang&timezone=$timezone');
+  final bytes = await imageFile.readAsBytes();
+
+  final response = await http.post(
+    uri,
+    headers: {
+      'Content-Type': 'image/jpeg',
+      'Accept-Language': Platform.localeName,
+      'X-Timezone': timezone,
+    },
+    body: bytes,
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(utf8.decode(response.bodyBytes));
+  } else {
+    throw Exception('Failed to moderate: ${response.body}');
+  }
+}</div>
+
+                <h3 style="font-size: 0.9rem; color: var(--accent); margin-top: 20px;">4. Code Mẫu Tích Hợp React Native / Axios</h3>
+                <div class="code-box">// React Native / Axios snippet
+import axios from 'axios';
+import * as FileSystem from 'expo-file-system';
+
+async function checkAndProfile(imageUri) {
+  const base64Data = await FileSystem.readAsStringAsync(imageUri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  const buffer = Buffer.from(base64Data, 'base64');
+
+  const res = await axios.post('http://YOUR_SERVER_IP:8000/check', buffer, {
+    headers: { 'Content-Type': 'image/jpeg' },
+  });
+
+  const { allowed, guard, profile } = res.data;
+  if (!allowed) {
+    alert('Ảnh không được phép đăng: ' + guard.violations.join(', '));
+    return;
+  }
+
+  // Tự động gán tags & caption vào Note kỷ niệm của user
+  console.log('Sở thích:', profile.interest_label);
+  console.log('Tags:', profile.lifestyle_tags);
+  console.log('Caption gợi ý:', profile.suggested_note_caption);
+}</div>
+            </div>
+        </div>
+
+        <!-- TAB 3: LAYERED ARCHITECTURE EXPLANATION -->
+        <div id="tab-architecture" style="display: none;">
+            <div class="card">
+                <h2>🏛️ Tài Liệu Kiến Trúc Phân Tầng (Layered Architecture)</h2>
+                <p style="font-size: 0.88rem; color: var(--muted); margin-bottom: 16px;">
+                    Toàn bộ logic được chia thành 4 tầng riêng biệt, tuân thủ nguyên lý Đơn trách nhiệm (Single Responsibility), không gộp dồn vào một file.
+                </p>
+
+                <div class="step-item" style="border-left: 4px solid var(--accent);">
+                    <div class="step-header">
+                        <span>1. Tầng Presentation / API (api/server.py)</span>
+                    </div>
+                    <div class="step-body">
+                        - Sử dụng <code>ThreadingHTTPServer</code> đa luồng từ Python Standard Library.<br>
+                        - Giới hạn <code>MAX_UPLOAD_SIZE = 20MB</code> để ngăn chặn tấn công tràn bộ nhớ (DoS).<br>
+                        - Xử lý CORS toàn diện cho phép gọi từ cả web browser lẫn mobile app.<br>
+                        - Định tuyến: <code>POST /check</code>, <code>GET /rules</code>, <code>POST /blocklist</code>.
+                    </div>
                 </div>
 
-                <div class="tech-info" id="tech-info" style="display: none;">
-                    <div>Perceptual dHash: <code id="txt-hash">-</code></div>
-                    <button class="btn-small" id="btn-block" onclick="addCurrentHashToBlocklist()">+ Ban this dHash Permanently</button>
+                <div class="step-item" style="border-left: 4px solid #a855f7;">
+                    <div class="step-header">
+                        <span>2. Tầng Điều Phối Nghiệp Vụ (services/pipeline.py)</span>
+                    </div>
+                    <div class="step-body">
+                        - <strong>Validation</strong>: Xác thực header và payload ảnh nhị phân; từ chối file rác với HTTP 400.<br>
+                        - <strong>Fail-Fast Guard</strong>: Nếu ảnh vi phạm dHash hoặc NSFW, dừng quy trình ngay lập tức (tiết kiệm CPU, không chạy YOLO).<br>
+                        - <strong>Profiling Execution</strong>: Chỉ phân tích đối tượng và ngữ cảnh khi ảnh đã được xác nhận an toàn.<br>
+                        - <strong>Circuit Breaker</strong>: Bắt ngoại lệ nội bộ và gắn nhãn <code>flagged_pending_review: true</code>.
+                    </div>
                 </div>
 
-                <div id="placeholder-result" style="text-align: center; color: var(--muted); padding: 40px 0;">
-                    No image uploaded yet. Select or drop an image to start moderation!
+                <div class="step-item" style="border-left: 4px solid var(--danger);">
+                    <div class="step-header">
+                        <span>3. Tầng Kiểm Duyệt An Toàn (guards/dhash.py & guards/nsfw.py)</span>
+                    </div>
+                    <div class="step-body">
+                        - <strong>dHash</strong>: Tính 64-bit gradient hash với chuẩn hóa 16-hex fixed-width (<code>0x...</code>).<br>
+                        - <strong>BlocklistManager</strong>: Lưu hash dưới dạng số nguyên (<code>int</code>) trong RAM; tra cứu $O(1)$ khi so khớp và bitwise XOR siêu nhanh.<br>
+                        - <strong>NSFW Classifier</strong>: Chạy model OpenNSFW cục bộ trên CPU; chuẩn hóa xoay ảnh EXIF tự động.
+                    </div>
                 </div>
+
+                <div class="step-item" style="border-left: 4px solid var(--success);">
+                    <div class="step-header">
+                        <span>4. Tầng Trích Xuất Profile Người Dùng (profiling/detector.py & profiler.py)</span>
+                    </div>
+                    <div class="step-body">
+                        - <strong>ObjectDetector</strong>: Chạy YOLOv8n trên ONNX Runtime CPU + NMS thuần NumPy (không cần thư viện <code>ultralytics</code> nặng nề).<br>
+                        - <strong>UserProfiler</strong>: Phân loại sở thích (Ẩm thực, Làm việc, Xem phim, Du lịch, Thú cưng, Thể thao, Từ thiện).<br>
+                        - <strong>Social Context</strong>: Nhận diện bối cảnh Solo, Cặp đôi, Nhóm bạn hoặc Đám đông.<br>
+                        - <strong>Caption Generator</strong>: Sinh câu ghi chú kỷ niệm tương ứng với bối cảnh ảnh.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: AI AGENT PROCESS LOGS -->
+        <div id="tab-logs" style="display: none;">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+                    <h2>🤖 Vết Xử Lý Chi Tiết Dành Cho AI Agent (Process Logs)</h2>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-small" onclick="fetchLatestLog()" style="border-color: var(--accent); color: var(--accent);">🔄 Tải Vết Mới Nhất (GET /logs/latest)</button>
+                        <button class="btn-small" onclick="fetchMetricsSummary()">📊 Xem Metrics Tổng Hợp (GET /logs/summary)</button>
+                        <button class="btn-small" onclick="copyLogJSON()">📋 Copy JSON</button>
+                    </div>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 12px;">
+                    Dữ liệu được lưu trữ tự động tại thư mục <code>logs/process/latest_run.json</code> và <code>logs/process/history.jsonl</code>. AI Agent có thể đọc trực tiếp các trường <code>pipeline_stages</code>, <code>performance_breakdown</code> và <code>agent_telemetry</code> để tiến hành tối ưu hóa từng giai đoạn.
+                </p>
+
+                <div id="log-summary-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 14px;">
+                    <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="font-size: 0.75rem; color: var(--muted);">Trace ID:</div>
+                        <div id="stat-trace-id" style="font-size: 0.82rem; font-weight: 700; color: var(--accent); font-family: monospace;">-</div>
+                    </div>
+                    <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="font-size: 0.75rem; color: var(--muted);">Tổng Thời Gian:</div>
+                        <div id="stat-total-latency" style="font-size: 1.1rem; font-weight: 700; color: var(--success);">-</div>
+                    </div>
+                    <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="font-size: 0.75rem; color: var(--muted);">Nút Thắt (Bottleneck):</div>
+                        <div id="stat-bottleneck" style="font-size: 0.9rem; font-weight: 700; color: var(--warning);">-</div>
+                    </div>
+                    <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="font-size: 0.75rem; color: var(--muted);">Fail-Fast Early Exit:</div>
+                        <div id="stat-failfast" style="font-size: 0.9rem; font-weight: 700; color: var(--text);">-</div>
+                    </div>
+                </div>
+
+                <div class="code-box" id="log-code-viewer" style="max-height: 480px;">Nhấn nút 'Tải Vết Mới Nhất' để nạp telemetry...</div>
             </div>
         </div>
     </div>
@@ -226,6 +618,7 @@
     <script>
         let currentFile = null;
         let lastResult = null;
+        let rawLatestLog = null;
 
         const dropzone = document.getElementById('dropzone');
         const fileInput = document.getElementById('file-input');
@@ -246,9 +639,68 @@
             }
         });
 
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active');
+                if (b.getAttribute('onclick')?.includes(tabId)) b.classList.add('active');
+            });
+
+            document.getElementById('tab-playground').style.display = tabId === 'playground' ? 'block' : 'none';
+            document.getElementById('tab-docs').style.display = tabId === 'docs' ? 'block' : 'none';
+            document.getElementById('tab-architecture').style.display = tabId === 'architecture' ? 'block' : 'none';
+            document.getElementById('tab-logs').style.display = tabId === 'logs' ? 'block' : 'none';
+
+            if (tabId === 'logs') {
+                fetchLatestLog();
+            }
+        }
+
+        async function fetchLatestLog() {
+            const viewer = document.getElementById('log-code-viewer');
+            viewer.textContent = 'Đang tải từ GET /logs/latest...';
+            try {
+                const res = await fetch('/logs/latest');
+                const data = await res.json();
+                rawLatestLog = data;
+                viewer.textContent = JSON.stringify(data, null, 2);
+
+                if (data.trace_id) {
+                    document.getElementById('stat-trace-id').textContent = data.trace_id;
+                    const lat = data.performance_breakdown?.total_latency_ms;
+                    document.getElementById('stat-total-latency').textContent = lat ? `${lat} ms` : '-';
+                    document.getElementById('stat-bottleneck').textContent = data.performance_breakdown?.bottleneck_stage || 'N/A';
+                    document.getElementById('stat-failfast').textContent = data.outcome?.fail_fast_triggered ? 'CÓ (Tiết kiệm CPU)' : 'KHÔNG (Full pipeline)';
+                }
+            } catch (err) {
+                viewer.textContent = 'Lỗi khi tải log: ' + err;
+            }
+        }
+
+        async function fetchMetricsSummary() {
+            const viewer = document.getElementById('log-code-viewer');
+            viewer.textContent = 'Đang tải từ GET /logs/summary...';
+            try {
+                const res = await fetch('/logs/summary');
+                const data = await res.json();
+                rawLatestLog = data;
+                viewer.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                viewer.textContent = 'Lỗi khi tải metrics: ' + err;
+            }
+        }
+
+        function copyLogJSON() {
+            if (!rawLatestLog) {
+                alert('Chưa có dữ liệu log để copy.');
+                return;
+            }
+            navigator.clipboard.writeText(JSON.stringify(rawLatestLog, null, 2)).then(() => {
+                alert('Đã copy toàn bộ Process Log JSON vào clipboard!');
+            });
+        }
+
         function updateRules() {
             document.getElementById('val-nsfw').textContent = Number(document.getElementById('slider-nsfw').value).toFixed(2);
-            document.getElementById('val-violence').textContent = Number(document.getElementById('slider-violence').value).toFixed(2);
             document.getElementById('val-safe').textContent = Number(document.getElementById('slider-safe').value).toFixed(2);
         }
 
@@ -268,15 +720,17 @@
             document.getElementById('status-box').style.display = 'none';
             document.getElementById('violations-box').style.display = 'none';
             document.getElementById('meters-box').style.display = 'none';
-            document.getElementById('scene-box').style.display = 'none';
+            document.getElementById('profile-box').style.display = 'none';
             document.getElementById('tech-info').style.display = 'none';
+            document.getElementById('pipeline-stepper').style.display = 'none';
             document.getElementById('loading-box').style.display = 'block';
             document.getElementById('btn-recheck').disabled = true;
 
             const nsfw = document.getElementById('slider-nsfw').value;
-            const violence = document.getElementById('slider-violence').value;
             const safe = document.getElementById('slider-safe').value;
-            const url = `/check?max_nsfw=${nsfw}&max_violence=${violence}&min_safe=${safe}`;
+            const lang = document.getElementById('select-lang').value;
+            const tz = document.getElementById('select-tz').value;
+            const url = `/check?max_nsfw=${nsfw}&min_safe=${safe}&lang=${lang}&timezone=${encodeURIComponent(tz)}`;
 
             try {
                 const res = await fetch(url, {
@@ -288,7 +742,7 @@
                 lastResult = data;
                 renderResult(data);
             } catch (err) {
-                alert('Error connecting to moderation server: ' + err);
+                alert('Lỗi kết nối tới server: ' + err);
             } finally {
                 document.getElementById('loading-box').style.display = 'none';
                 document.getElementById('btn-recheck').disabled = false;
@@ -300,103 +754,260 @@
             const statusBox = document.getElementById('status-box');
             statusBox.style.display = 'block';
 
-            if (data.flagged_pending_review) {
+            const guard = data.guard || data;
+            const profile = data.profile;
+
+            if (guard.flagged_pending_review) {
                 statusBox.className = 'status-box pending';
-                statusBox.textContent = '⚠️ PENDING REVIEW (FAIL-OPEN EXCEPTION)';
-            } else if (data.allowed) {
+                statusBox.textContent = '⚠️ CHỜ DUYỆT THỦ CÔNG (FAIL-OPEN EXCEPTION)';
+            } else if (guard.allowed) {
                 statusBox.className = 'status-box allowed';
-                statusBox.textContent = '✓ ALLOWED (PASSED MODERATION)';
+                statusBox.textContent = '✓ HỢP LỆ - ĐƯỢC PHÉP ĐĂNG LÊN NOTE KỶ NIỆM';
             } else {
                 statusBox.className = 'status-box blocked';
-                statusBox.textContent = '✕ BLOCKED (RULE VIOLATION)';
+                statusBox.textContent = '✕ BỊ CHẶN - VI PHẠM NỘI DUNG';
             }
 
-            // Violations list
+            // Violations
             const vBox = document.getElementById('violations-box');
             const vList = document.getElementById('violations-list');
-            if (data.violations && data.violations.length > 0) {
-                vList.innerHTML = data.violations.map(v => `<li>${v}</li>`).join('');
+            if (guard.violations && guard.violations.length > 0) {
+                vList.innerHTML = guard.violations.map(v => `<li>${v}</li>`).join('');
                 vBox.style.display = 'block';
             } else {
                 vBox.style.display = 'none';
             }
 
             // Scores
-            if (data.scores) {
+            if (guard.scores) {
                 document.getElementById('meters-box').style.display = 'block';
-                const s = data.scores;
-                const safePct = Math.round((s.safe || 0) * 100);
-                const nsfwPct = Math.round((s.nsfw || 0) * 100);
-                const vioPct = Math.round((s.violence || 0) * 100);
+                const safePct = Math.round((guard.scores.safe || 0) * 100);
+                const nsfwPct = Math.round((guard.scores.nsfw || 0) * 100);
 
                 document.getElementById('txt-safe').textContent = safePct + '%';
                 document.getElementById('fill-safe').style.width = safePct + '%';
 
                 document.getElementById('txt-nsfw').textContent = nsfwPct + '%';
                 document.getElementById('fill-nsfw').style.width = nsfwPct + '%';
-
-                document.getElementById('txt-violence').textContent = vioPct + '%';
-                document.getElementById('fill-violence').style.width = vioPct + '%';
             }
 
-            // Technical info
-            if (data.hash) {
-                document.getElementById('tech-info').style.display = 'block';
-                document.getElementById('txt-hash').textContent = data.hash;
-            }
+            // User Profile Insights
+            const profileBox = document.getElementById('profile-box');
+            if (profile) {
+                profileBox.style.display = 'block';
+                document.getElementById('badge-interest').textContent = `🎯 ${profile.interest_label}`;
+                document.getElementById('txt-conf').textContent = `Độ tin cậy: ${Math.round(profile.confidence * 100)}%`;
+                document.getElementById('txt-scene-desc').textContent = `Bối cảnh nhận diện: ${profile.scene_summary}`;
+                document.getElementById('txt-caption').textContent = profile.suggested_note_caption;
 
-            // Scene & Object Analysis (YOLO)
-            const sceneBox = document.getElementById('scene-box');
-            if (data.scene) {
-                sceneBox.style.display = 'block';
-                document.getElementById('scene-summary').textContent = data.scene.summary || 'Không có mô tả chi tiết';
-                const pCount = data.scene.people_count || 0;
-                document.getElementById('badge-people').textContent = pCount > 0 ? `👥 ${pCount} người` : '👤 0 người';
-                
-                const tagsContainer = document.getElementById('scene-tags');
-                tagsContainer.innerHTML = '';
-                const counts = data.scene.counts || {};
-                const keys = Object.keys(counts);
-                if (keys.length > 0) {
-                    keys.forEach(k => {
-                        const tag = document.createElement('span');
-                        tag.style.cssText = 'background: #334155; color: #cbd5e1; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-family: monospace; border: 1px solid #475569;';
-                        tag.textContent = `${k}: ${counts[k]}`;
-                        tagsContainer.appendChild(tag);
-                    });
+                const social = profile.social_context || {};
+                document.getElementById('badge-social').textContent = social.description || 'Chân dung';
+
+                // Timezone & Language Badges
+                const dbRec = data.db_record || {};
+                const tzStr = dbRec.user_timezone || 'UTC';
+                const todStr = dbRec.time_of_day ? ` • ${dbRec.time_of_day}` : '';
+                const langStr = dbRec.user_language ? ` • ${dbRec.user_language.toUpperCase()}` : '';
+                document.getElementById('badge-tz').textContent = `🕒 ${tzStr}${todStr}${langStr}`;
+
+                const tagContainer = document.getElementById('lifestyle-tags-container');
+                tagContainer.innerHTML = '';
+                (profile.lifestyle_tags || []).forEach(t => {
+                    const span = document.createElement('span');
+                    span.className = 'lifestyle-tag';
+                    span.textContent = t;
+                    tagContainer.appendChild(span);
+                });
+
+                // Merged Tags
+                const mergedContainer = document.getElementById('merged-tags-container');
+                mergedContainer.innerHTML = '';
+                (profile.merged_tags || []).forEach(t => {
+                    const span = document.createElement('span');
+                    span.className = 'lifestyle-tag';
+                    span.style.background = '#0284c722';
+                    span.style.color = 'var(--accent)';
+                    span.style.borderColor = '#0284c755';
+                    span.textContent = t;
+                    mergedContainer.appendChild(span);
+                });
+
+                // Database Record Viewer
+                if (data.db_record) {
+                    document.getElementById('db-record-viewer').textContent = JSON.stringify(data.db_record, null, 2);
                 } else {
-                    const noTag = document.createElement('span');
-                    noTag.style.cssText = 'color: var(--muted); font-size: 0.75rem;';
-                    noTag.textContent = 'Không có vật thể riêng lẻ';
-                    tagsContainer.appendChild(noTag);
+                    document.getElementById('db-record-viewer').textContent = 'Chưa có record lưu DB.';
                 }
             } else {
-                sceneBox.style.display = 'none';
+                profileBox.style.display = 'none';
             }
+
+            // Tech info
+            if (guard.hash) {
+                document.getElementById('tech-info').style.display = 'flex';
+                document.getElementById('txt-hash').textContent = guard.hash;
+                if (data.execution_time_ms) {
+                    document.getElementById('txt-time').textContent = `(${data.execution_time_ms} ms)`;
+                }
+            }
+
+            // Pipeline Stepper (Real-time Documentation Trace)
+            renderPipelineStepper(data);
+        }
+
+        function renderPipelineStepper(data) {
+            const stepper = document.getElementById('pipeline-stepper');
+            stepper.style.display = 'block';
+
+            const guard = data.guard || data;
+            const profile = data.profile;
+
+            const stDhash = document.getElementById('status-dhash');
+            const descDhash = document.getElementById('desc-dhash');
+            const stNsfw = document.getElementById('status-nsfw');
+            const descNsfw = document.getElementById('desc-nsfw');
+            const stYolo = document.getElementById('status-yolo');
+            const descYolo = document.getElementById('desc-yolo');
+            const stProf = document.getElementById('status-profiler');
+            const descProf = document.getElementById('desc-profiler');
+
+            // Tier 1: dHash
+            if (guard.reason === 'BANNED_HASH_MATCH') {
+                stDhash.className = 'step-status fail';
+                stDhash.textContent = 'BLOCKED';
+                descDhash.innerHTML = `Khớp hash <code>${guard.hash}</code> với ảnh vi phạm trong blocklist (Hamming dist <= 4). Dừng xử lý ngay!`;
+                
+                stNsfw.className = 'step-status skipped';
+                stNsfw.textContent = 'SKIPPED';
+                descNsfw.textContent = 'Bỏ qua (Fail-Fast optimization).';
+
+                stYolo.className = 'step-status skipped';
+                stYolo.textContent = 'SKIPPED';
+                descYolo.textContent = 'Bỏ qua (Fail-Fast optimization).';
+
+                stProf.className = 'step-status skipped';
+                stProf.textContent = 'SKIPPED';
+                descProf.textContent = 'Bỏ qua (Fail-Fast optimization).';
+                return;
+            } else {
+                stDhash.className = 'step-status pass';
+                stDhash.textContent = 'PASSED';
+                descDhash.innerHTML = `Hash <code>${guard.hash || '-'}</code> không nằm trong danh sách cấm. Tiếp tục qua Tầng 2.`;
+            }
+
+            // Tier 2: NSFW
+            if (!guard.allowed) {
+                stNsfw.className = 'step-status fail';
+                stNsfw.textContent = 'VIOLATED';
+                descNsfw.innerHTML = `Phát hiện nội dung nhạy cảm: ${guard.violations.join(', ')}. Tự động thêm hash vào blocklist!`;
+
+                stYolo.className = 'step-status skipped';
+                stYolo.textContent = 'SKIPPED';
+                descYolo.textContent = 'Bỏ qua profiling đối với ảnh vi phạm để tiết kiệm CPU.';
+
+                stProf.className = 'step-status skipped';
+                stProf.textContent = 'SKIPPED';
+                descProf.textContent = 'Bỏ qua trích xuất profile.';
+                return;
+            } else {
+                stNsfw.className = 'step-status pass';
+                stNsfw.textContent = 'PASSED';
+                const s = guard.scores || {};
+                descNsfw.innerHTML = `Safe: <code>${Math.round((s.safe || 0)*100)}%</code>, NSFW: <code>${Math.round((s.nsfw || 0)*100)}%</code>. Nằm trong ngưỡng an toàn. Tiếp tục Tầng 3.`;
+            }
+
+            // Tier 3: YOLO
+            if (profile) {
+                stYolo.className = 'step-status pass';
+                stYolo.textContent = 'DETECTED';
+                descYolo.innerHTML = `Nhận diện bối cảnh: <code>${profile.scene_summary}</code> (${profile.social_context.description}).`;
+
+                stProf.className = 'step-status pass';
+                stProf.textContent = 'MAPPED';
+                descProf.innerHTML = `Xác lập sở thích chính: <strong>${profile.interest_label}</strong> (${Math.round(profile.confidence*100)}% confidence). Đã sinh tags & gợi ý caption note!`;
+            }
+        }
+
+        function copyCaption() {
+            const text = document.getElementById('txt-caption').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Đã copy caption vào clipboard: ' + text);
+            });
+        }
+
+        function copyDBRecord() {
+            if (!lastResult?.db_record) {
+                alert('Chưa có record DB để copy.');
+                return;
+            }
+            navigator.clipboard.writeText(JSON.stringify(lastResult.db_record, null, 2)).then(() => {
+                alert('Đã copy Database Record JSON vào clipboard!');
+            });
         }
 
         async function addCurrentHashToBlocklist() {
-            if (!lastResult || !lastResult.hash) return;
+            const h = lastResult?.guard?.hash || lastResult?.hash;
+            if (!h) return;
             const res = await fetch('/blocklist', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    hash: lastResult.hash,
-                    reason: 'MANUAL_BLOCK',
-                    scores: lastResult.scores || {}
-                })
+                body: JSON.stringify({ hash: h, reason: 'MANUAL_BLOCK' })
             });
             const data = await res.json();
-            alert(`Hash ${lastResult.hash} saved to blocklist.jsonl! Total blocked: ${data.total_blocked}`);
+            alert(`Đã lưu hash ${h} vào blocklist.jsonl! Tổng cộng đã chặn: ${data.total_blocked}`);
             checkCurrentImage();
         }
 
-        // Fetch initial rule configuration
+        // Auto-detect browser timezone
+        try {
+            const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const tzSelect = document.getElementById('select-tz');
+            if (localTz && tzSelect) {
+                let matched = false;
+                for (let i = 0; i < tzSelect.options.length; i++) {
+                    if (tzSelect.options[i].value === localTz) {
+                        tzSelect.selectedIndex = i;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    const opt = document.createElement('option');
+                    opt.value = localTz;
+                    opt.text = `${localTz} (Device Local)`;
+                    opt.selected = true;
+                    tzSelect.prepend(opt);
+                }
+            }
+        } catch(e) {}
+
+        // Dynamically fetch supported languages from Source Engine
+        fetch('/languages')
+            .then(res => res.json())
+            .then(data => {
+                const langSelect = document.getElementById('select-lang');
+                const langs = data.supported_languages || [];
+                if (langs.length > 0) {
+                    langSelect.innerHTML = '';
+                    langs.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.code;
+                        opt.text = `${item.flag} ${item.name}${item.is_default ? ' [Default]' : ''}`;
+                        if (item.is_default) opt.selected = true;
+                        langSelect.appendChild(opt);
+                    });
+                    document.getElementById('val-lang-count').textContent = `${langs.length} ngôn ngữ Source`;
+                }
+            })
+            .catch(() => {
+                document.getElementById('val-lang-count').textContent = '4 ngôn ngữ Source';
+            });
+
+        // Fetch initial rules
         fetch('/rules')
             .then(res => res.json())
             .then(rules => {
                 if (rules.max_nsfw !== undefined) document.getElementById('slider-nsfw').value = rules.max_nsfw;
-                if (rules.max_violence !== undefined) document.getElementById('slider-violence').value = rules.max_violence;
                 if (rules.min_safe !== undefined) document.getElementById('slider-safe').value = rules.min_safe;
                 updateRules();
             })

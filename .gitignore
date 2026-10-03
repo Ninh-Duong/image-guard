@@ -26,3 +26,11 @@ ENV/
 *.tmp
 *.log
 test_crop.jpg
+
+# Runtime Process Logs (keep structure and README)
+logs/process/runs/*.json
+logs/process/*.jsonl
+logs/process/latest_run.json
+logs/process/metrics_summary.json
+!logs/process/README.md
+
